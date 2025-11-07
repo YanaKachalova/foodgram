@@ -1,0 +1,15 @@
+set -e
+
+host="${DB_HOST:-db}"
+port="${DB_PORT:-5432}"
+
+echo "Waiting for Postgres at $host:$port..."
+until nc -z "$host" "$port"; do
+  sleep 0.5
+done
+echo "Postgres is up."
+
+python manage.py migrate --noinput
+python manage.py collectstatic --noinput || true
+
+exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 90
