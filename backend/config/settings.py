@@ -18,6 +18,8 @@ INSTALLED_APPS = [
     'django_filters',
     'djoser',
     'apps.api',
+    'apps.users',
+    'apps.recipes',
 ]
 
 MIDDLEWARE = [
@@ -97,5 +99,4 @@ DJOSER = {
     'SERIALIZERS': {},
 }
 
-# Подключить кастомного User на спринте 1
-# AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'users.User'
