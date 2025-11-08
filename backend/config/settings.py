@@ -5,8 +5,13 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key')
 DEBUG = os.getenv('DEBUG', '0') == '1'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-
+ALLOWED_HOSTS = ['89.169.177.182', 'localhost', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = [
+    'http://89.169.177.182',
+    'http://89.169.177.182:8090',
+    'http://localhost',
+    'http://127.0.0.1'
+]
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
