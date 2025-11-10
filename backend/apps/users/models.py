@@ -11,7 +11,7 @@ class User(AbstractUser):
         unique=True,
         validators=[RegexValidator(r'^[\w.@+-]+$', 'Недопустимые символы в юзернейме')],
     )
-    # Добавить аватар в спринте 2
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
     class Meta:
         ordering = ('id',)
@@ -34,7 +34,7 @@ class Follow(models.Model):
             UniqueConstraint(fields=('user', 'author'), name='unique_follow'),
             models.CheckConstraint(check=~Q(user=models.F('author')), name='no_self_follow'),
         ]
-        ordering = ('-created',)
+        ordering = ['-created',]
 
     def __str__(self):
         return f'{self.user} → {self.author}'

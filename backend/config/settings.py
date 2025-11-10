@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
     'djoser',
     'apps.api',
@@ -101,7 +102,17 @@ REST_FRAMEWORK = {
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': False,
-    'SERIALIZERS': {},
+    'SERIALIZERS': {
+        'user': 'apps.users.serializers.UserReadSerializer',
+        'current_user': 'apps.users.serializers.UserReadSerializer',
+        'user_create': 'spps.users.serializers.UserCreateSerializer',
+        'set_password': 'djoser.serializers.SetPasswordSerializer',
+    },
+    'PERMISSIONS': {
+        'user_list': ['rest_framework.permissions.AllowAny'],
+        'user': ['rest_framework.permissions.AllowAny'],
+        'current_user': ['rest_framework.permissions.IsAuthenticated'],
+    },
 }
 
 AUTH_USER_MODEL = 'users.User'
