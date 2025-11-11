@@ -7,7 +7,7 @@ from django.db.models.functions import Lower
 User = settings.AUTH_USER_MODEL
 
 class Tag(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=64, unique=True)
     color = models.CharField(max_length=7, unique=True, help_text='#RRGGBB')
     slug = models.SlugField(max_length=100, unique=True)
 
@@ -19,8 +19,8 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=256)
-    measurement_unit = models.CharField(max_length=64)
+    name = models.CharField(max_length=128)
+    measurement_unit = models.CharField(max_length=32)
 
     class Meta:
         constraints = [
