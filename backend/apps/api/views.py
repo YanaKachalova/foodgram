@@ -46,7 +46,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, drf_filters.OrderingFilter]
     filterset_class = RecipeFilter
     ordering_fields = ["created"]
-    pagination_class = None
 
     def get_serializer_class(self):
         if self.request and self.request.method in ("POST", "PUT", "PATCH"):
