@@ -7,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.recipes.models import Tag, Ingredient, Recipe
 from .serializers import TagSerializer, IngredientSerializer, RecipeReadSerializer, RecipeWriteSerializer
-from .filters import RecipeFilter
+from .filters import RecipeFilter, IngredientFilter
 
 
 @api_view(['GET'])
@@ -31,21 +31,20 @@ class TagViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gene
 class IngredientViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = (permissions.AllowAny,)
     pagination_class = None
-    filter_backends = [drf_filters.SearchFilter]
-    search_fields = ["^name"]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.select_related("author").prefetch_related(
         "tags",
-        Prefetch("ri")
+        "recipe_ingredients__ingredient",
     )
     permission_classes = (SafeMethodsOnly,)
     filter_backends = [DjangoFilterBackend, drf_filters.OrderingFilter]
     filterset_class = RecipeFilter
-    ordering_fields = ["created"]
+    ordering_fields = ["pub_date"]
 
     def get_serializer_class(self):
         if self.request and self.request.method in ("POST", "PUT", "PATCH"):

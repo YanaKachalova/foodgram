@@ -6,6 +6,7 @@ from apps.recipes.models import (Tag,
                                  RecipeIngredient,
                                  Favorite,
                                  ShoppingCart)
+from apps.users.serializers import UserReadSerializer
 from .fields import Base64ImageField
 
 
@@ -28,7 +29,7 @@ class IngredientAmountWrite(serializers.Serializer):
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
-    author = serializers.SerializerMethodField()
+    author = UserReadSerializer(read_only=True)
     ingredients = serializers.SerializerMethodField()
     image = serializers.ImageField(read_only=True)
     is_favorited = serializers.SerializerMethodField()
@@ -38,19 +39,15 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = (
             "id","author","name","text","image","cooking_time",
-            "tags","ingredients","created","is_favorited","is_in_shopping_cart"
+            "tags","ingredients","pub_date","is_favorited","is_in_shopping_cart"
         )
 
     def _get_user(self):
         req = self.context.get("request")
         return getattr(req, "user", None) if req else None
 
-    def get_author(self, obj):
-        user = obj.author
-        return {"id": user.id, "username": user.username}
-
     def get_ingredients(self, obj):
-        rows = obj.ri.select_related("ingredient")
+        rows = obj.recipe_ingredients.select_related("ingredient")
         data = []
         for row in rows:
             ing = getattr(row, "ingredient", None)
@@ -58,7 +55,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                 "id": row.ingredient_id,
                 "name": getattr(ing, "name", None),
                 "measurement_unit": getattr(ing, "measurement_unit", None),
-                "amount": str(r.amount),
+                "amount": row.amount,
             })
         return data
 
@@ -72,7 +69,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    tags = serializers.ListField(child=serializers.SlugField(), write_only=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True
+    )
     ingredients = IngredientAmountWrite(many=True, write_only=True)
     image = Base64ImageField(required=False)
 
@@ -101,7 +101,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return attrs
 
     def _set_m2m(self, recipe, tags, ingredients):
-        from apps.recipes.models import Tag, Ingredient, RecipeIngredient
         recipe.tags.set(Tag.objects.filter(slug__in=tags))
         RecipeIngredient.objects.filter(recipe=recipe).delete()
         rows = []
@@ -122,13 +121,25 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop("tags", None)
         ingredients = validated_data.pop("ingredients", None)
-        for attr, val in validated_data.items():
-            setattr(instance, attr, val)
-        instance.save()
-        if tags is not None or ingredients is not None:
-            self._set_m2m(instance, tags or [t.slug for t in instance.tags.all()], ingredients or [
-                {"id": ri.ingredient_id, "amount": ri.amount} for ri in instance.ri.all()
-            ])
+        instance = super().update(instance, validated_data)
+
+        if tags is None and ingredients is None:
+            return instance
+
+        if tags is None:
+            tags_data = [t.slug for t in instance.tags.all()]
+        else:
+            tags_data = tags
+
+        if ingredients is None:
+            ingredients_data = [
+                {"id": ri.ingredient_id, "amount": ri.amount}
+                for ri in instance.recipe_ingredients.all()
+            ]
+        else:
+            ingredients_data = ingredients
+
+        self._set_m2m(instance, tags_data, ingredients_data)
         return instance
 
     def to_representation(self, instance):

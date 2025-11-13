@@ -1,6 +1,6 @@
 import django_filters as df
 
-from apps.recipes.models import Recipe, Tag
+from apps.recipes.models import Recipe, Tag, Ingredient
 
 
 class RecipeFilter(df.FilterSet):
@@ -11,7 +11,7 @@ class RecipeFilter(df.FilterSet):
 
     class Meta:
         model = Recipe
-        fields = ("author",)
+        fields = ("author", "tags")
 
     def filter_tags(self, queryset, name, value):
         slugs = [s.strip() for s in value.split(",") if s.strip()]
@@ -20,13 +20,22 @@ class RecipeFilter(df.FilterSet):
         return queryset.filter(tags__slug__in=slugs).distinct()
 
     def filter_is_favorited(self, qs, name, value):
-        user = self.request.user
-        if user.is_anonymous:
+        if value is None:
+            return qs
+        user = getattr(self.request, "user", None)
+        if not user or user.is_anonymous:
             return qs.none() if value else qs
-        return qs.filter(in_favorites__user=user).distinct() if value else qs.exclude(in_favorites__user=user)
 
     def filter_is_in_cart(self, qs, name, value):
         user = self.request.user
         if user.is_anonymous:
             return qs.none() if value else qs
         return qs.filter(in_carts__user=user).distinct() if value else qs.exclude(in_carts__user=user)
+
+
+class IngredientFilter(df.FilterSet):
+    name = df.CharFilter(field_name="name", lookup_expr="istartswith")
+
+    class Meta:
+        model = Ingredient
+        fields = ("name",)

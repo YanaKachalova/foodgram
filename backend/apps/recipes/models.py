@@ -12,7 +12,7 @@ class Tag(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
 
     class Meta:
-        ordering = ('id',)
+        ordering = ('name',)
 
     def __str__(self):
         return self.name
@@ -68,7 +68,7 @@ class RecipeTag(models.Model):
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, related_name='recipe_ingredients', on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, related_name='ingredient_recipes', on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField()
 
     class Meta:
