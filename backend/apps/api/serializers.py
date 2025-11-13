@@ -101,15 +101,23 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return attrs
 
     def _set_m2m(self, recipe, tags, ingredients):
-        recipe.tags.set(Tag.objects.filter(slug__in=tags))
+        recipe.tags.set(tags)
         RecipeIngredient.objects.filter(recipe=recipe).delete()
-        rows = []
-        ing_map = {i.id: i for i in Ingredient.objects.filter(id__in=[x["id"] for x in ingredients])}
-        for item in ingredients:
-            rows.append(RecipeIngredient(
-                recipe=recipe, ingredient=ing_map[item["id"]], amount=item["amount"]
-            ))
-        RecipeIngredient.bulk_create(rows) if hasattr(RecipeIngredient, 'bulk_create') else RecipeIngredient.objects.bulk_create(rows)
+        ing_map = {
+            ingredient.id: ingredient
+            for ingredient in Ingredient.objects.filter(
+                id__in=[item["id"] for item in ingredients]
+            )
+        }
+        recipe_ingredients = [
+            RecipeIngredient(
+                recipe=recipe,
+                ingredient=ing_map[item["id"]],
+                amount=item["amount"],
+            )
+            for item in ingredients
+        ]
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
 
     def create(self, validated_data):
         tags = validated_data.pop("tags")
