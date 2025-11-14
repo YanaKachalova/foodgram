@@ -11,9 +11,9 @@ router.register("recipes", RecipeViewSet, basename="recipes")
 
 urlpatterns = [
     path('health/', health),
+    path('users/', include('apps.users.urls', namespace='users')),
     path('', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
-    path('users/', include('apps.users.urls', namespace='users')),
     path('', include(router.urls)),
 ]
 

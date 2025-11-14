@@ -21,14 +21,14 @@ class AvatarUpdateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def put(self, request):
-        serializer = AvatarSerializer(request.user,
+        serializer = AvatarSerializer(instance=request.user,
                                       data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
     def patch(self, request):
-        serializer = AvatarSerializer(request.user,
+        serializer = AvatarSerializer(instance=request.user,
                                       data=request.data,
                                       partial=True)
         serializer.is_valid(raise_exception=True)

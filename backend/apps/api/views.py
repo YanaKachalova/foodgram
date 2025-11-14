@@ -30,11 +30,6 @@ def health(request):
     return Response({'status': 'ok'})
 
 
-class SafeMethodsOnly(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.method in permissions.SAFE_METHODS or request.user and request.user.is_authenticated
-
-
 class TagViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer

@@ -25,7 +25,7 @@ class RecipeFilter(filters.FilterSet):
         if int(value) == 0:
             return queryset
         user = getattr(self.request, "user", None)
-        if user is None  or not user.is_anonymous:
+        if user is None or not user.is_authenticated:
             return queryset.none()
         return queryset.filter(in_favorites__user=user).distinct()
 
