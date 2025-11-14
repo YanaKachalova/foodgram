@@ -1,40 +1,47 @@
-import django_filters as df
+import django_filters as filters
 
 from apps.recipes.models import Recipe, Tag, Ingredient
 
 
-class RecipeFilter(df.FilterSet):
-    tags = df.CharFilter(method="filter_tags")
-    author = df.NumberFilter(field_name="author__id")
-    is_favorited = df.BooleanFilter(method="filter_is_favorited")
-    is_in_shopping_cart = df.BooleanFilter(method="filter_is_in_cart")
+class RecipeFilter(filters.FilterSet):
+    tags = filters.CharFilter(method="filter_tags")
+    author = filters.NumberFilter(field_name="author__id")
+    is_favorited = filters.NumberFilter(method="filter_is_favorited")
+    is_in_shopping_cart = filters.NumberFilter(method="filter_is_in_cart")
 
     class Meta:
         model = Recipe
-        fields = ("author", "tags")
+        fields = ("author", "tags", "is_favorited", "is_in_shopping_cart", "name")
 
     def filter_tags(self, queryset, name, value):
-        slugs = [s.strip() for s in value.split(",") if s.strip()]
+        slugs = [slug.strip() for slug in value.split(",") if slug.strip()]
         if not slugs:
             return queryset
         return queryset.filter(tags__slug__in=slugs).distinct()
 
-    def filter_is_favorited(self, qs, name, value):
+    def filter_is_favorited(self, queryset, name, value):
         if value is None:
-            return qs
+            return queryset
+        if int(value) == 0:
+            return queryset
         user = getattr(self.request, "user", None)
-        if not user or user.is_anonymous:
-            return qs.none() if value else qs
+        if user is None  or not user.is_anonymous:
+            return queryset.none()
+        return queryset.filter(in_favorites__user=user).distinct()
 
-    def filter_is_in_cart(self, qs, name, value):
-        user = self.request.user
-        if user.is_anonymous:
-            return qs.none() if value else qs
-        return qs.filter(in_carts__user=user).distinct() if value else qs.exclude(in_carts__user=user)
+    def filter_is_in_cart(self, queryset, name, value):
+        if value is None:
+            return queryset
+        if int(value) == 0:
+            return queryset
+        user = getattr(self.request, 'user', None)
+        if user is None or not user.is_authenticated:
+            return queryset.none()
+        return queryset.filter(in_carts__user=user).distinct()
 
 
-class IngredientFilter(df.FilterSet):
-    name = df.CharFilter(field_name="name", lookup_expr="istartswith")
+class IngredientFilter(filters.FilterSet):
+    name = filters.CharFilter(field_name="name", lookup_expr="istartswith")
 
     class Meta:
         model = Ingredient

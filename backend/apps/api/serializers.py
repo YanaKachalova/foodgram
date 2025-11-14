@@ -38,8 +38,17 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-            "id","author","name","text","image","cooking_time",
-            "tags","ingredients","pub_date","is_favorited","is_in_shopping_cart"
+            "id",
+            "author",
+            "name",
+            "text",
+            "image",
+            "cooking_time",
+            "tags",
+            "ingredients",
+            "pub_date",
+            "is_favorited",
+            "is_in_shopping_cart",
         )
 
     def _get_user(self):
@@ -60,12 +69,16 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return data
 
     def get_is_favorited(self, obj):
-        user = self._get_user()
-        return False if not user or user.is_anonymous else Favorite.objects.filter(user=user, recipe=obj).exists()
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        return obj.in_favorites.filter(user=request.user).exists()
 
     def get_is_in_shopping_cart(self, obj):
-        user = self._get_user()
-        return False if not user or user.is_anonymous else ShoppingCart.objects.filter(user=user, recipe=obj).exists()
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        return obj.in_carts.filter(user=request.user).exists()
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
@@ -152,3 +165,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return RecipeReadSerializer(instance, context=self.context).data
+
+
+class RecipeShortSerializer(serializers.ModelSerializer):
+    """Короткое представление рецепта для избранного и корзины."""
+
+    image = Base64ImageField(read_only=True)
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
