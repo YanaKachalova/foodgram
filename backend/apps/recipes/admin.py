@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.db.models import Count
-from django.utils.html import format_html
 
 from .models import (Tag, Ingredient, Recipe, RecipeTag,
                      RecipeIngredient, Favorite,
@@ -35,9 +34,13 @@ class FavoritedFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == "yes":
-            return queryset.filter(**{f"{FAVORITE_RECIPE_REL}__isnull": False}).distinct()
+            return (queryset
+                    .filter(**{f"{FAVORITE_RECIPE_REL}__isnull": False})
+                    .distinct())
         if self.value() == "no":
-            return queryset.filter(**{f"{FAVORITE_RECIPE_REL}__isnull": True}).distinct()
+            return (queryset
+                    .filter(**{f"{FAVORITE_RECIPE_REL}__isnull": True})
+                    .distinct())
         return queryset
 
 
@@ -70,7 +73,9 @@ class RecipeAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """Добавляет аннотацию числа добавлений в избранное."""
         queryset = super().get_queryset(request)
-        return queryset.annotate(_fav_count=Count(FAVORITE_RECIPE_REL, distinct=True))
+        return (queryset
+                .annotate(_fav_count=Count(FAVORITE_RECIPE_REL,
+                                           distinct=True)))
 
     @admin.display(description="В избранном", ordering="_fav_count")
     def favorite_count(self, obj):

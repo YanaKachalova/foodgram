@@ -3,9 +3,7 @@ from rest_framework import serializers
 from apps.recipes.models import (Tag,
                                  Ingredient,
                                  Recipe,
-                                 RecipeIngredient,
-                                 Favorite,
-                                 ShoppingCart)
+                                 RecipeIngredient)
 from apps.users.serializers import UserReadSerializer
 from .fields import Base64ImageField
 
@@ -91,26 +89,36 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ("name","text","image","cooking_time","tags","ingredients")
+        fields = ("name",
+                  "text",
+                  "image",
+                  "cooking_time",
+                  "tags",
+                  "ingredients")
 
     def validate(self, attrs):
         tags = attrs.get("tags") or []
         if not tags:
-            raise serializers.ValidationError({"tags": "Нужно указать хотя бы один тег."})
+            raise serializers.ValidationError({
+                "tags": "Нужно указать хотя бы один тег."})
         if len(tags) != len(set(tags)):
-            raise serializers.ValidationError({"tags": "Теги не должны повторяться."})
+            raise serializers.ValidationError({
+                "tags": "Теги не должны повторяться."})
 
         ings = attrs.get("ingredients") or []
         if not ings:
-            raise serializers.ValidationError({"ingredients": "Нужен хотя бы один ингредиент."})
+            raise serializers.ValidationError({
+                "ingredients": "Нужен хотя бы один ингредиент."})
         seen = set()
         for item in ings:
             iid = item["id"]
             if iid in seen:
-                raise serializers.ValidationError({"ingredients": "Ингредиенты не должны дублироваться."})
+                raise serializers.ValidationError({
+                    "ingredients": "Ингредиенты не должны дублироваться."})
             seen.add(iid)
             if item["amount"] <= 0:
-                raise serializers.ValidationError({"ingredients": f"Количество для id={iid} должно быть > 0."})
+                raise serializers.ValidationError({
+                    "ingredients": f"Количество id={iid} должно быть > 0."})
         return attrs
 
     def _set_m2m(self, recipe, tags, ingredients):
@@ -135,7 +143,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         tags = validated_data.pop("tags")
         ingredients = validated_data.pop("ingredients")
-        recipe = Recipe.objects.create(author=self.context["request"].user, **validated_data)
+        recipe = Recipe.objects.create(author=self.context["request"].user,
+                                       **validated_data)
         self._set_m2m(recipe, tags, ingredients)
         return recipe
 

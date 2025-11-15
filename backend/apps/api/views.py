@@ -1,27 +1,26 @@
-from rest_framework import viewsets, mixins, status, permissions, filters as drf_filters
+from rest_framework import (viewsets,
+                            mixins,
+                            status,
+                            permissions,
+                            filters as drf_filters)
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
 from urllib.parse import urlparse
 
-from apps.recipes.models import (
-                                 Tag,
+from apps.recipes.models import (Tag,
                                  Ingredient,
                                  Recipe,
                                  Favorite,
                                  ShoppingCart,
-                                 RecipeIngredient
-                                 )
-from .serializers import (
-                          TagSerializer,
+                                 RecipeIngredient)
+from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeReadSerializer,
                           RecipeWriteSerializer,
-                          RecipeShortSerializer
-                          )
+                          RecipeShortSerializer)
 from .filters import RecipeFilter, IngredientFilter
 
 
@@ -31,7 +30,9 @@ def health(request):
     return Response({'status': 'ok'})
 
 
-class TagViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class TagViewSet(mixins.ListModelMixin,
+                 mixins.RetrieveModelMixin,
+                 viewsets.GenericViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (permissions.AllowAny,)
@@ -58,10 +59,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeWriteSerializer
         return RecipeReadSerializer
 
-
     def perform_create(self, serializer):
         serializer.save()
-
 
     @action(
         detail=True,
@@ -83,7 +82,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
 
             Favorite.objects.create(user=user, recipe=recipe)
-            serializer = RecipeShortSerializer(recipe, context={'request': request})
+            serializer = RecipeShortSerializer(recipe,
+                                               context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         favorite_qs = Favorite.objects.filter(user=user, recipe=recipe)
@@ -116,7 +116,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
 
             ShoppingCart.objects.create(user=user, recipe=recipe)
-            serializer = RecipeShortSerializer(recipe, context={'request': request})
+            serializer = RecipeShortSerializer(recipe,
+                                               context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         cart_qs = ShoppingCart.objects.filter(user=user, recipe=recipe)
@@ -128,7 +129,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         else:
             cart_qs.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-
 
     @action(
         detail=False,
@@ -174,7 +174,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'attachment; filename="shopping_cart.txt"'
         )
         return response
-
 
     @action(
         detail=True,

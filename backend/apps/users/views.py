@@ -47,8 +47,10 @@ class SubscribeView(APIView):
     def post(self, request, id):
         author = get_object_or_404(User, id=id)
         if author == request.user:
-            return Response({'errors': 'Нельзя подписаться на себя!'}, status=400)
-        obj, created = Follow.objects.get_or_create(user=request.user, author=author)
+            return Response({'errors': 'Нельзя подписаться на себя!'},
+                            status=400)
+        obj, created = Follow.objects.get_or_create(user=request.user,
+                                                    author=author)
         if not created:
             return Response({'errors': 'Уже подписаны.'}, status=400)
         serializer = FollowReadSerializer(obj, context={'request': request})
@@ -56,14 +58,19 @@ class SubscribeView(APIView):
 
     def delete(self, request, id):
         author = get_object_or_404(User, id=id)
-        deleted, _ = Follow.objects.filter(user=request.user, author=author).delete()
+        deleted, _ = Follow.objects.filter(user=request.user,
+                                           author=author).delete()
         if not deleted:
             return Response({'errors': 'Подписки не было.'}, status=400)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class SubscriptionsListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = FollowReadSerializer
 
     def get_queryset(self):
-        return Follow.objects.filter(user=self.request.user).select_related('author')
+        return (Follow.objects
+                .filter(user=self.request.user)
+                .select_related('author')
+                )
