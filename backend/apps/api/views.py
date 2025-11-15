@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
+from urllib.parse import urlparse
 
 from apps.recipes.models import (
                                  Tag,
@@ -139,8 +140,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         """Выгрузка списка покупок по корзине пользователя. """
         user = request.user
-
-        # Все рецепты, которые пользователь добавил в корзину
         recipes_in_cart = Recipe.objects.filter(in_carts__user=user)
         if not recipes_in_cart.exists():
             return Response(
@@ -175,3 +174,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'attachment; filename="shopping_cart.txt"'
         )
         return response
+
+
+    @action(
+        detail=True,
+        methods=['get'],
+        permission_classes=[AllowAny],
+        url_path='get-link',
+        url_name='get_link',
+    )
+    def get_link(self, request, pk=None):
+        """ Возвращает короткую ссылку на страницу рецепта"""
+        recipe = self.get_object()
+        current_url = request.build_absolute_uri()
+        parsed = urlparse(current_url)
+        base_url = f'{parsed.scheme}://{parsed.netloc}'
+        shortLink = f'{base_url}/recipes/{recipe.id}/'
+        return Response({'short_link': shortLink}, status=status.HTTP_200_OK)
