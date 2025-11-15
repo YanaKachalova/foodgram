@@ -4,20 +4,27 @@ from apps.recipes.models import Recipe, Tag, Ingredient
 
 
 class RecipeFilter(filters.FilterSet):
-    tags = filters.CharFilter(method="filter_tags")
+    tags = filters.AllValuesMultipleFilter(field_name='tags__slug')
     author = filters.NumberFilter(field_name="author__id")
     is_favorited = filters.NumberFilter(method="filter_is_favorited")
     is_in_shopping_cart = filters.NumberFilter(method="filter_is_in_cart")
+    name = filters.CharFilter(field_name='name', lookup_expr='icontains')
 
     class Meta:
         model = Recipe
         fields = ("author", "tags", "is_favorited", "is_in_shopping_cart", "name")
 
-    def filter_tags(self, queryset, name, value):
-        slugs = [slug.strip() for slug in value.split(",") if slug.strip()]
-        if not slugs:
-            return queryset
-        return queryset.filter(tags__slug__in=slugs).distinct()
+#    def filter_tags(self, queryset, name, value):
+#        if not value:
+#            return queryset
+#        if isinstance(value, str):
+#            tags = value.split(',')
+#        else:
+#            tags = []
+#            for value in value:
+#                if value:
+#                    tags.extend(v.split(','))
+#        return queryset.filter(tags__slug__in=tags).distinct()
 
     def filter_is_favorited(self, queryset, name, value):
         if value is None:
