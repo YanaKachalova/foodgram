@@ -14,18 +14,6 @@ class RecipeFilter(filters.FilterSet):
         model = Recipe
         fields = ("author", "tags", "is_favorited", "is_in_shopping_cart", "name")
 
-#    def filter_tags(self, queryset, name, value):
-#        if not value:
-#            return queryset
-#        if isinstance(value, str):
-#            tags = value.split(',')
-#        else:
-#            tags = []
-#            for value in value:
-#                if value:
-#                    tags.extend(v.split(','))
-#        return queryset.filter(tags__slug__in=tags).distinct()
-
     def filter_is_favorited(self, queryset, name, value):
         if value is None:
             return queryset
