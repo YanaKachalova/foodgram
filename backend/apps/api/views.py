@@ -219,7 +219,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class RecipeShortLinkRedirectView(View):
     """Редирект с короткой ссылки на страницу рецепта."""
 
-    def get_link(self, request, pk):
+    def get(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
         # базовый адрес
         base_url = request.build_absolute_uri('/')
