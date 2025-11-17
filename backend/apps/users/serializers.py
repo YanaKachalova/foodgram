@@ -7,8 +7,6 @@ from .models import User, Follow
 
 
 class UserReadSerializer(BaseUserSerializer):
-    is_subscribed = serializers.SerializerMethodField()
-
     class Meta(BaseUserSerializer.Meta):
         model = User
         fields = ('id',
@@ -16,16 +14,8 @@ class UserReadSerializer(BaseUserSerializer):
                   'username',
                   'first_name',
                   'last_name',
-                  'avatar',
-                  'is_subscribed')
+                  'avatar')
 
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return Follow.objects.filter(
-                user=request.user,
-                author=obj.author,).exists()
-        return False
 
 
 class UserCreateSerializer(BaseUserCreateSerializer):
@@ -72,6 +62,14 @@ class FollowReadSerializer(serializers.ModelSerializer):
                   'recipes',
                   'recipes_count',
                   )
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Follow.objects.filter(
+                user=request.user,
+                author=obj.author,).exists()
+        return False
 
     def get_recipes(self, obj):
         from apps.api.serializers import RecipeShortSerializer
