@@ -17,7 +17,6 @@ class UserReadSerializer(BaseUserSerializer):
                   'avatar')
 
 
-
 class UserCreateSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
         model = User
