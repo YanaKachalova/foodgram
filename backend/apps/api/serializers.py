@@ -72,6 +72,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 class RecipeWriteSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountWrite(many=True, write_only=True)
     image = Base64ImageField(required=False)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True
+    )
 
     class Meta:
         model = Recipe
@@ -86,6 +90,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
+        tags = attrs.get('tags') or []
+        if not tags:
+            raise serializers.ValidationError({
+                'tags': 'Нужно выбрать хотя бы один тег.'
+            })
+
         ingredients = attrs.get('ingredients') or []
         if not ingredients:
             raise serializers.ValidationError({
