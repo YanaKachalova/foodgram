@@ -11,13 +11,13 @@ from .fields import Base64ImageField
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ("id", "name", "color", "slug")
+        fields = ('id', 'name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ("id", "name", "measurement_unit")
+        fields = '__all__'
 
 
 class IngredientAmountWrite(serializers.Serializer):
@@ -30,140 +30,116 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     author = UserReadSerializer(read_only=True)
     ingredients = serializers.SerializerMethodField()
     image = serializers.ImageField(read_only=True)
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.BooleanField(read_only=True)
+    is_in_shopping_cart = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Recipe
         fields = (
-            "id",
-            "author",
-            "name",
-            "text",
-            "image",
-            "cooking_time",
-            "tags",
-            "ingredients",
-            "pub_date",
-            "is_favorited",
-            "is_in_shopping_cart",
+            'id',
+            'author',
+            'name',
+            'text',
+            'image',
+            'cooking_time',
+            'tags',
+            'ingredients',
+            'pub_date',
+            'is_favorited',
+            'is_in_shopping_cart',
         )
 
     def _get_user(self):
-        req = self.context.get("request")
-        return getattr(req, "user", None) if req else None
+        req = self.context.get('request')
+        return getattr(req, 'user', None) if req else None
 
-    def get_ingredients(self, obj):
-        rows = obj.recipe_ingredients.select_related("ingredient")
-        data = []
-        for row in rows:
-            ing = getattr(row, "ingredient", None)
-            data.append({
-                "id": row.ingredient_id,
-                "name": getattr(ing, "name", None),
-                "measurement_unit": getattr(ing, "measurement_unit", None),
-                "amount": row.amount,
-            })
-        return data
-
-    def get_is_favorited(self, obj):
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return obj.in_favorites.filter(user=request.user).exists()
-
-    def get_is_in_shopping_cart(self, obj):
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return obj.in_carts.filter(user=request.user).exists()
+    def get_ingredients(self, recipe):
+        rows = recipe.recipe_ingredients.select_related('ingredient')
+        return [
+           {
+            'id': row.ingredient_id,
+            'name': row.ingredient.name,
+            'measurement_unit': row.ingredient.measurement_unit,
+            'amount': row.amount,
+           }
+           for row in rows
+        ]
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(),
-        many=True
-    )
     ingredients = IngredientAmountWrite(many=True, write_only=True)
     image = Base64ImageField(required=False)
 
     class Meta:
         model = Recipe
-        fields = ("name",
-                  "text",
-                  "image",
-                  "cooking_time",
-                  "tags",
-                  "ingredients")
+        fields = ('name',
+                  'text',
+                  'image',
+                  'cooking_time',
+                  'tags',
+                  'ingredients')
+        extra_kwargs = {
+            'tags': {'allow_empty': False},
+        }
 
     def validate(self, attrs):
-        tags = attrs.get("tags") or []
-        if not tags:
+        ingredients = attrs.get('ingredients') or []
+        if not ingredients:
             raise serializers.ValidationError({
-                "tags": "Нужно указать хотя бы один тег."})
-        if len(tags) != len(set(tags)):
-            raise serializers.ValidationError({
-                "tags": "Теги не должны повторяться."})
-
-        ings = attrs.get("ingredients") or []
-        if not ings:
-            raise serializers.ValidationError({
-                "ingredients": "Нужен хотя бы один ингредиент."})
+                'ingredients': 'Нужен хотя бы один ингредиент.'})
         seen = set()
-        for item in ings:
-            iid = item["id"]
-            if iid in seen:
+        for item in ingredients:
+            ingredient_id = item.get('id')
+            if ingredient_id in seen:
                 raise serializers.ValidationError({
-                    "ingredients": "Ингредиенты не должны дублироваться."})
-            seen.add(iid)
-            if item["amount"] <= 0:
+                    'ingredients': 'Ингредиенты не должны дублироваться.'})
+            seen.add(ingredient_id)
+            if item['amount'] <= 0:
                 raise serializers.ValidationError({
-                    "ingredients": f"Количество id={iid} должно быть > 0."})
+                    'ingredients': f'id={ingredient_id} должно быть > 0.'})
         return attrs
 
     def _set_m2m(self, recipe, tags, ingredients):
         recipe.tags.set(tags)
-        RecipeIngredient.objects.filter(recipe=recipe).delete()
+        recipe.recipe_ingredients.all().delete()
         ing_map = {
             ingredient.id: ingredient
             for ingredient in Ingredient.objects.filter(
-                id__in=[item["id"] for item in ingredients]
+                id__in=[item['id'] for item in ingredients]
             )
         }
         recipe_ingredients = [
             RecipeIngredient(
                 recipe=recipe,
-                ingredient=ing_map[item["id"]],
-                amount=item["amount"],
+                ingredient=ing_map[item['id']],
+                amount=item['amount'],
             )
             for item in ingredients
         ]
         RecipeIngredient.objects.bulk_create(recipe_ingredients)
 
     def create(self, validated_data):
-        tags = validated_data.pop("tags")
-        ingredients = validated_data.pop("ingredients")
-        recipe = Recipe.objects.create(author=self.context["request"].user,
-                                       **validated_data)
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredients')
+        validated_data['author'] = self.context['request'].user
+        recipe = super().create(validated_data)
         self._set_m2m(recipe, tags, ingredients)
         return recipe
 
     def update(self, instance, validated_data):
-        tags = validated_data.pop("tags", None)
-        ingredients = validated_data.pop("ingredients", None)
+        tags = validated_data.pop('tags', None)
+        ingredients = validated_data.pop('ingredients', None)
         instance = super().update(instance, validated_data)
-
         if tags is None and ingredients is None:
             return instance
-
-        if tags is None:
-            tags_data = [t.slug for t in instance.tags.all()]
-        else:
-            tags_data = tags
+        tags_data = (
+            [tag.slug for tag in instance.tags.all()]
+            if tags is None
+            else tags)
 
         if ingredients is None:
             ingredients_data = [
-                {"id": ri.ingredient_id, "amount": ri.amount}
+                {'id': ri.ingredient_id, 'amount': ri.amount}
                 for ri in instance.recipe_ingredients.all()
             ]
         else:
