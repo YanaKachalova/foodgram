@@ -128,11 +128,6 @@ class UserRecipeRelationBase(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
     )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        verbose_name='Рецепт',
-    )
     created = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Создано')
@@ -152,12 +147,26 @@ class UserRecipeRelationBase(models.Model):
 
 
 class Favorite(UserRecipeRelationBase):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Рецепт',
+    )
+
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
 
 
 class ShoppingCart(UserRecipeRelationBase):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='in_carts',
+        verbose_name='Рецепт',
+    )
+
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
