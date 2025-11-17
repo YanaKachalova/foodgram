@@ -71,7 +71,7 @@ class Recipe(models.Model):
 
     class Meta:
         ordering = ('-pub_date',)
-        indexes = (models.Index(fields=['-pub_date']))
+        indexes = (models.Index(fields=['-pub_date']),)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
