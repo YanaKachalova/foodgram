@@ -49,11 +49,13 @@ class SubscribeView(APIView):
         if author == request.user:
             return Response({'errors': 'Нельзя подписаться на себя!'},
                             status=400)
-        obj, created = Follow.objects.get_or_create(user=request.user,
-                                                    author=author)
+        follow_object, created = Follow.objects.get_or_create(
+            user=request.user,
+            author=author)
         if not created:
             return Response({'errors': 'Уже подписаны.'}, status=400)
-        serializer = FollowReadSerializer(obj, context={'request': request})
+        serializer = FollowReadSerializer(follow_object,
+                                          context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):
