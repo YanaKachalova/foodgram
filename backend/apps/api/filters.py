@@ -5,10 +5,6 @@ from apps.recipes.models import Recipe, Ingredient
 
 class RecipeFilter(filters.FilterSet):
     tags = filters.AllValuesMultipleFilter(field_name='tags__slug')
-    author = filters.NumberFilter(field_name='author__id')
-    is_favorited = filters.NumberFilter(method='filter_is_favorited')
-    is_in_shopping_cart = filters.NumberFilter(method='filter_is_in_cart')
-    name = filters.CharFilter(field_name='name', lookup_expr='icontains')
 
     class Meta:
         model = Recipe
@@ -18,25 +14,17 @@ class RecipeFilter(filters.FilterSet):
                   'is_in_shopping_cart',
                   'name')
 
-    def filter_is_favorited(self, queryset, name, value):
-        if value is None:
+    def filter_is_favorited(self, queryset, name, filter_value):
+        if filter_value is None or int(filter_value) == 0:
             return queryset
-        if int(value) == 0:
-            return queryset
-        user = getattr(self.request, 'user', None)
-        if user is None or not user.is_authenticated:
-            return queryset.none()
-        return queryset.filter(in_favorites__user=user).distinct()
+        user = self.request.user
+        return queryset.filter(in_favorites__user_id=user.pk)
 
-    def filter_is_in_cart(self, queryset, name, value):
-        if value is None:
+    def filter_is_in_cart(self, queryset, name, filter_value):
+        if filter_value is None or int(filter_value) == 0:
             return queryset
-        if int(value) == 0:
-            return queryset
-        user = getattr(self.request, 'user', None)
-        if user is None or not user.is_authenticated:
-            return queryset.none()
-        return queryset.filter(in_carts__user=user).distinct()
+        user = self.request.user
+        return queryset.filter(in_carts__user_id=user.pk)
 
 
 class IngredientFilter(filters.FilterSet):

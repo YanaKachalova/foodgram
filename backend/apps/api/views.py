@@ -6,6 +6,7 @@ from rest_framework import (viewsets,
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from django.db.models import Exists, OuterRef, BooleanField, Value
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
 from urllib.parse import urlparse
@@ -48,11 +49,34 @@ class IngredientViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     filter_backends = [DjangoFilterBackend, drf_filters.OrderingFilter]
     filterset_class = RecipeFilter
     ordering_fields = ["pub_date"]
+
+    def get_queryset(self):
+        queryset = Recipe.objects.all()
+        user = self.request.user
+
+        if user.is_authenticated:
+            favorites_subquery = Favorite.objects.filter(
+                user=user,
+                recipe=OuterRef('pk'),
+            )
+            cart_subquery = ShoppingCart.objects.filter(
+                user=user,
+                recipe=OuterRef('pk'),
+            )
+            queryset = queryset.annotate(
+                is_favorited=Exists(favorites_subquery),
+                is_in_shopping_cart=Exists(cart_subquery),
+            )
+        else:
+            queryset = queryset.annotate(
+                is_favorited=Value(False, output_field=BooleanField()),
+                is_in_shopping_cart=Value(False, output_field=BooleanField()),
+            )
+        return queryset
 
     def get_serializer_class(self):
         if self.request.method in ("POST", "PUT", "PATCH"):
