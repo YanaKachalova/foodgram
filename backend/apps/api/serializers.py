@@ -1,9 +1,12 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from apps.recipes.models import (Tag,
                                  Ingredient,
                                  Recipe,
-                                 RecipeIngredient)
+                                 RecipeIngredient,
+                                 Favorite,
+                                 ShoppingCart)
 from apps.users.serializers import UserReadSerializer
 from .fields import Base64ImageField
 
@@ -160,3 +163,45 @@ class RecipeShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для списка избранного."""
+
+    class Meta:
+        model = Favorite
+        fields = ('recipe',)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        recipe = attrs['recipe']
+
+        if user.favorites.filter(recipe=recipe).exists():
+            raise ValidationError({'detail': 'Рецепт уже в избранном.'})
+
+        return attrs
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        return Favorite.objects.create(user=user, **validated_data)
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    """Сериализатор для списка покупок."""
+
+    class Meta:
+        model = ShoppingCart
+        fields = ('recipe',)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        recipe = attrs['recipe']
+
+        if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+            raise ValidationError({'detail': 'Рецепт уже в списке покупок.'})
+
+        return attrs
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        return ShoppingCart.objects.create(user=user, **validated_data)
