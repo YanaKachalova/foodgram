@@ -25,7 +25,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class IngredientAmountWrite(serializers.Serializer):
     id = serializers.IntegerField()
-    amount = serializers.DecimalField(max_digits=8, decimal_places=2)
+    amount = serializers.IntegerField(min_value=1)
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
@@ -97,9 +97,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'ingredients': 'Ингредиенты не должны дублироваться.'})
             seen.add(ingredient_id)
-            if item['amount'] <= 0:
-                raise serializers.ValidationError({
-                    'ingredients': f'id={ingredient_id} должно быть > 0.'})
         return attrs
 
     def _set_m2m(self, recipe, tags, ingredients):
