@@ -109,7 +109,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_name='favorite',
     )
     def favorite(self, request, pk=None):
-        """Добавление и удаление рецепта виз избранн(ое/ого)."""
+        """Добавление рецепта в избранное и его удаление."""
         recipe = self.get_object()
         user = request.user
 
@@ -123,9 +123,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(out_serializer.data,
                             status=status.HTTP_201_CREATED)
 
-        deleted_count, _ = user.favorites.filter(recipe=recipe).delete()
-        if deleted_count == 0:
+        favorite_qs = user.favorites.filter(recipe=recipe)
+        if not favorite_qs.exists():
             raise NotFound('Рецепта нет в избранном.')
+        favorite_qs.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -150,11 +151,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(out_serializer.data,
                             status=status.HTTP_201_CREATED)
 
-        deleted_count, _ = ShoppingCart.objects.filter(
-            user=user,
-            recipe=recipe).delete()
-        if deleted_count == 0:
+        cart_qs = ShoppingCart.objects.filter(user=user, recipe=recipe)
+        if not cart_qs.exists():
             raise NotFound('Рецепта нет в списке покупок.')
+        cart_qs.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
