@@ -213,7 +213,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = self.get_object()
         short_path = reverse('recipe-short-link', args=[recipe.pk])
         short_link = request.build_absolute_uri(short_path)
-        return Response({'short_link': short_link})
+        return Response({'short-link': short_link})
 
 
 class RecipeShortLinkRedirectView(View):
