@@ -10,9 +10,9 @@ class RecipeFilter(filters.FilterSet):
         model = Recipe
         fields = ('author',
                   'tags',
-                  'name',
-                  'is_favorited',
-                  'is_in_shopping_cart')
+                  'name')
+        #   'is_favorited',
+        #   'is_in_shopping_cart'
 
     def filter_is_favorited(self, queryset, name, filter_value):
         if filter_value is None or int(filter_value) == 0:
