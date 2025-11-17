@@ -16,7 +16,7 @@ router.register("recipes", RecipeViewSet, basename="recipes")
 urlpatterns = [
     path('health/', health),
     path('', include('djoser.urls')),
-    # path('users/', include('apps.users.urls', namespace='users')),
+    path('users/', include('apps.users.urls', namespace='users')),
     path('auth/', include('djoser.urls.authtoken')),
     path('s/<int:pk>/',
          RecipeShortLinkRedirectView.as_view(),

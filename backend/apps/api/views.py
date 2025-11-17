@@ -105,7 +105,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=['post'],
         permission_classes=[IsAuthenticated],
-        url_path='favorite',
+        url_path='add_favorite',
         url_name='add_favorite',
     )
     def favorite(self, request, pk=None):
@@ -125,7 +125,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=['delete'],
         permission_classes=[IsAuthenticated],
-        url_path='favorite',
+        url_path='remove_favorite',
         url_name='remove_favorite',
     )
     def remove_favorite(self, request, pk=None):
@@ -144,7 +144,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=['post'],
         permission_classes=[IsAuthenticated],
-        url_path='shopping_cart',
+        url_path='add_shopping_cart',
         url_name='add_shopping_cart',
     )
     def shopping_cart(self, request, pk=None):
@@ -165,7 +165,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=['delete'],
         permission_classes=[IsAuthenticated],
-        url_path='shopping_cart',
+        url_path='remove_shopping_cart',
         url_name='remove_shopping_cart',
     )
     def delete_from_shopping_cart(self, request, pk=None):

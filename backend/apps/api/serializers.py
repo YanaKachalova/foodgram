@@ -176,7 +176,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         recipe = attrs['recipe']
 
-        if user.favorites.filter(recipe=recipe).exists():
+        if Favorite.objects.filter(user=user, recipe=recipe).exists():
             raise ValidationError({'detail': 'Рецепт уже в избранном.'})
 
         return attrs
