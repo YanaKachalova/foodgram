@@ -5,17 +5,23 @@ from django.db.models import Q, UniqueConstraint
 
 
 class User(AbstractUser):
-    email = models.EmailField('email address', unique=True)
+    email = models.EmailField('email address',
+                              unique=True,
+                              verbose_name='Электронная почта')
     username = models.CharField(
         max_length=50,
         unique=True,
         validators=[RegexValidator(r'^[\w.@+-]+$',
                                    'Недопустимые символы в юзернейме')],
+        verbose_name='Юзернейм'
     )
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    avatar = models.ImageField(upload_to='avatars/',
+                               blank=True,
+                               null=True,
+                               verbose_name='Аватар')
 
     class Meta:
-        ordering = ('id',)
+        ordering = ('username',)
 
     def __str__(self):
         return self.get_username()
@@ -34,7 +40,7 @@ class Follow(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Автор'
     )
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Дата')
 
     class Meta:
         constraints = [
@@ -42,7 +48,7 @@ class Follow(models.Model):
             models.CheckConstraint(check=~Q(user=models.F('author')),
                                    name='no_self_follow'),
         ]
-        ordering = ['-created', ]
+        ordering = ('-created',)
 
     def __str__(self):
         return f'{self.user} → {self.author}'
