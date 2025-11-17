@@ -9,7 +9,6 @@ class RecipeFilter(filters.FilterSet):
     is_in_shopping_cart = filters.filters.NumberFilter(
         method='filter_is_in_cart')
 
-
     class Meta:
         model = Recipe
         fields = ('author',
