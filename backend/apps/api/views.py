@@ -103,82 +103,58 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=['post'],
+        methods=['post', 'delete'],
         permission_classes=[IsAuthenticated],
-        url_path='add_favorite',
+        url_path='favorite',
         url_name='add_favorite',
     )
     def favorite(self, request, pk=None):
-        """Добавление рецепта в избранное."""
-        recipe = self.get_object()
-        serializer = FavoriteSerializer(
-            data={'recipe': recipe.id},
-            context={'request': request},)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        out_serializer = self.get_serializer(recipe)
-
-        return Response(out_serializer.data, status=status.HTTP_201_CREATED)
-
-    @action(
-        detail=True,
-        methods=['delete'],
-        permission_classes=[IsAuthenticated],
-        url_path='remove_favorite',
-        url_name='remove_favorite',
-    )
-    def remove_favorite(self, request, pk=None):
-        """Удаление рецепта из избранного."""
+        """Добавление и удаление рецепта виз избранн(ое/ого)."""
         recipe = self.get_object()
         user = request.user
 
-        favorite_qs = user.favorites.filter(recipe=recipe)
-        deleted_count, _ = favorite_qs.delete()
+        if request.method == 'POST':
+            serializer = FavoriteSerializer(
+                data={'recipe': recipe.id},
+                context={'request': request},)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            out_serializer = self.get_serializer(recipe)
+            return Response(out_serializer.data,
+                            status=status.HTTP_201_CREATED)
+
+        deleted_count, _ = user.favorites.filter(recipe=recipe).delete()
         if deleted_count == 0:
             raise NotFound('Рецепта нет в избранном.')
-
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
-        methods=['post'],
+        methods=['post', 'delete'],
         permission_classes=[IsAuthenticated],
-        url_path='add_shopping_cart',
+        url_path='shopping_cart',
         url_name='add_shopping_cart',
     )
     def shopping_cart(self, request, pk=None):
-        """Добавление рецепта в список покупок."""
-        recipe = self.get_object()
-        serializer = ShoppingCartSerializer(
-            data={'recipe': recipe.id},
-            context={'request': request},)
-
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        out_serializer = self.get_serializer(recipe)
-
-        return Response(out_serializer.data, status=status.HTTP_201_CREATED)
-
-    @action(
-        detail=True,
-        methods=['delete'],
-        permission_classes=[IsAuthenticated],
-        url_path='remove_shopping_cart',
-        url_name='remove_shopping_cart',
-    )
-    def delete_from_shopping_cart(self, request, pk=None):
-        """Удаление рецепта из списка покупок."""
+        """Добавление рецепта в список покупок и его удаление."""
         recipe = self.get_object()
         user = request.user
+
+        if request.method == 'POST':
+            serializer = ShoppingCartSerializer(
+                data={'recipe': recipe.id},
+                context={'request': request},)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            out_serializer = self.get_serializer(recipe)
+            return Response(out_serializer.data,
+                            status=status.HTTP_201_CREATED)
 
         deleted_count, _ = ShoppingCart.objects.filter(
             user=user,
             recipe=recipe).delete()
         if deleted_count == 0:
             raise NotFound('Рецепта нет в списке покупок.')
-
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
