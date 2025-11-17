@@ -5,8 +5,7 @@ from django.db.models import Q, UniqueConstraint
 
 
 class User(AbstractUser):
-    email = models.EmailField('email address',
-                              unique=True,
+    email = models.EmailField(unique=True,
                               verbose_name='Электронная почта')
     username = models.CharField(
         max_length=50,
