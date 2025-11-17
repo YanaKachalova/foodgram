@@ -4,9 +4,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import User, Follow
-from .serializers import (AvatarSerializer,
-                          UserReadSerializer,
-                          FollowReadSerializer)
+from apps.api.serializers import (AvatarSerializer,
+                                  UserReadSerializer,
+                                  FollowReadSerializer)
 
 
 class MeView(generics.RetrieveAPIView):
