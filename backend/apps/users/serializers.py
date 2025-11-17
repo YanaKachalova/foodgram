@@ -7,6 +7,8 @@ from .models import User, Follow
 
 
 class UserReadSerializer(BaseUserSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
     class Meta(BaseUserSerializer.Meta):
         model = User
         fields = ('id',
@@ -14,17 +16,23 @@ class UserReadSerializer(BaseUserSerializer):
                   'username',
                   'first_name',
                   'last_name',
-                  'avatar')
+                  'avatar',
+                  'is_subscribed')
 
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.following.filter(user=request.user).exists()
+        return False
 
 class UserCreateSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
         model = User
         fields = ('email',
                   'username',
+                  'password',
                   'first_name',
-                  'last_name',
-                  'password')
+                  'last_name')
 
 
 class AvatarSerializer(serializers.ModelSerializer):
