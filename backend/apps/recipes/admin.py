@@ -69,7 +69,6 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'tags', FavoritedFilter)
     inlines = (RecipeIngredientInline, RecipeTagInline)
     autocomplete_fields = ('author',)
-    date_hierarchy = 'pub_date'
     ordering = ('-pub_date',)
     list_select_related = ('author',)
 
