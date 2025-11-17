@@ -25,6 +25,7 @@ class UserReadSerializer(BaseUserSerializer):
             return obj.following.filter(user=request.user).exists()
         return False
 
+
 class UserCreateSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
         model = User
