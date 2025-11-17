@@ -106,7 +106,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         methods=['post', 'delete'],
         permission_classes=[IsAuthenticated],
         url_path='favorite',
-        url_name='add_favorite',
+        url_name='favorite',
     )
     def favorite(self, request, pk=None):
         """Добавление и удаление рецепта виз избранн(ое/ого)."""
@@ -133,7 +133,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         methods=['post', 'delete'],
         permission_classes=[IsAuthenticated],
         url_path='shopping_cart',
-        url_name='add_shopping_cart',
+        url_name='shopping_cart',
     )
     def shopping_cart(self, request, pk=None):
         """Добавление рецепта в список покупок и его удаление."""
