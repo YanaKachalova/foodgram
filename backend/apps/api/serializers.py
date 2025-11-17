@@ -56,13 +56,13 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     def get_ingredients(self, recipe):
         rows = recipe.recipe_ingredients.select_related('ingredient')
         return [
-           {
-            'id': row.ingredient_id,
-            'name': row.ingredient.name,
-            'measurement_unit': row.ingredient.measurement_unit,
-            'amount': row.amount,
-           }
-           for row in rows
+                {
+                    'id': row.ingredient_id,
+                    'name': row.ingredient.name,
+                    'measurement_unit': row.ingredient.measurement_unit,
+                    'amount': row.amount,
+                }
+                for row in rows
         ]
 
 
