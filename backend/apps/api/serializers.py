@@ -42,6 +42,45 @@ class RecipeIngredientReadSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
+class UserReadSerializer(BaseUserSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta(BaseUserSerializer.Meta):
+        model = User
+        fields = ('id',
+                  'email',
+                  'username',
+                  'first_name',
+                  'last_name',
+                  'avatar',
+                  'is_subscribed')
+
+    def get_is_subscribed(self, author):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if user and user.is_authenticated:
+            return author.following.filter(user_id=user.pk).exists()
+        return False
+
+
+class UserCreateSerializer(BaseUserCreateSerializer):
+    class Meta(BaseUserCreateSerializer.Meta):
+        model = User
+        fields = ('email',
+                  'username',
+                  'password',
+                  'first_name',
+                  'last_name')
+
+
+class AvatarSerializer(serializers.ModelSerializer):
+    avatar = Base64ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = ('avatar',)
+
+
 class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     author = UserReadSerializer(read_only=True)
@@ -228,45 +267,6 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         return ShoppingCart.objects.create(user=user, **validated_data)
-
-
-class UserReadSerializer(BaseUserSerializer):
-    is_subscribed = serializers.SerializerMethodField()
-
-    class Meta(BaseUserSerializer.Meta):
-        model = User
-        fields = ('id',
-                  'email',
-                  'username',
-                  'first_name',
-                  'last_name',
-                  'avatar',
-                  'is_subscribed')
-
-    def get_is_subscribed(self, author):
-        request = self.context.get('request')
-        user = getattr(request, 'user', None)
-        if user and user.is_authenticated:
-            return author.following.filter(user_id=user.pk).exists()
-        return False
-
-
-class UserCreateSerializer(BaseUserCreateSerializer):
-    class Meta(BaseUserCreateSerializer.Meta):
-        model = User
-        fields = ('email',
-                  'username',
-                  'password',
-                  'first_name',
-                  'last_name')
-
-
-class AvatarSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField(required=False, allow_null=True)
-
-    class Meta:
-        model = User
-        fields = ('avatar',)
 
 
 class FollowReadSerializer(serializers.ModelSerializer):

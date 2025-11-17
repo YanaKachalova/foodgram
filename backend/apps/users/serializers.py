@@ -1,4 +1,5 @@
-# from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
+# from djoser.serializers import UserCreateSerializer as 
+# BaseUserCreateSerializer
 # from djoser.serializers import UserSerializer as BaseUserSerializer
 # from rest_framework import serializers
 
