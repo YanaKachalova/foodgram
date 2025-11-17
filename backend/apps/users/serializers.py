@@ -56,7 +56,6 @@ class FollowReadSerializer(serializers.ModelSerializer):
         source='author.recipes.count',
         read_only=True,
     )
-    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = Follow
@@ -66,18 +65,9 @@ class FollowReadSerializer(serializers.ModelSerializer):
                   'first_name',
                   'last_name',
                   'avatar',
-                  'is_subscribed',
                   'recipes',
                   'recipes_count',
                   )
-
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return Follow.objects.filter(
-                user=request.user,
-                author=obj.author,).exists()
-        return False
 
     def get_recipes(self, obj):
         from apps.api.serializers import RecipeShortSerializer
