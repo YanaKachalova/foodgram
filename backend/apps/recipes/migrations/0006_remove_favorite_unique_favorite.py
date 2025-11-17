@@ -10,8 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveConstraint(
-            model_name='favorite',
-            name='unique_favorite',
+        migrations.RunSQL(
+            sql="ALTER TABLE recipes_favorite DROP CONSTRAINT IF EXISTS unique_favorite;",
+            reverse_sql=migrations.RunSQL.noop,
         ),
     ]
