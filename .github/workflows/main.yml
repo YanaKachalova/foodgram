@@ -95,7 +95,7 @@ jobs:
 
             cd infra
             docker compose pull
-            docker compose up -d
+            docker compose up -d --build
 
             docker compose exec -T backend python manage.py migrate
             docker compose exec -T backend python manage.py collectstatic --noinput
