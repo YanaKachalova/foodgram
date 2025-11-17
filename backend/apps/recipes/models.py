@@ -67,7 +67,7 @@ class Recipe(models.Model):
                                          through='RecipeIngredient',
                                          related_name='recipes',
                                          verbose_name='Ингредиенты')
-    pub_date = models.DateTimeField(auto_now_add=True, verbose_name= 'Дата')
+    pub_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата')
 
     class Meta:
         ordering = ('-pub_date',)
