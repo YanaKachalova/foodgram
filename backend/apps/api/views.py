@@ -123,7 +123,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(out_serializer.data,
                             status=status.HTTP_201_CREATED)
 
-        favorite_qs = user.favorites.filter(recipe=recipe)
+        favorite_qs = Favorite.objects.filter(user=user, recipe=recipe)
         if not favorite_qs.exists():
             raise NotFound('Рецепта нет в избранном.')
         favorite_qs.delete()

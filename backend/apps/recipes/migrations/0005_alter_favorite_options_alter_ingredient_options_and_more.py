@@ -42,10 +42,10 @@ class Migration(migrations.Migration):
             name='tag',
             options={'ordering': ('name',), 'verbose_name': 'Тег', 'verbose_name_plural': 'Теги'},
         ),
-        migrations.RemoveConstraint(
-            model_name='favorite',
-            name='unique_favorite',
-        ),
+        # migrations.RemoveConstraint(
+        #     model_name='favorite',
+        #     name='unique_favorite',
+        # ),
         migrations.RemoveConstraint(
             model_name='shoppingcart',
             name='unique_cart_item',
