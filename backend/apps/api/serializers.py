@@ -232,7 +232,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
-        fields = ('user', 'recipe')
+        fields = ('recipe',)
 
     def validate(self, attrs):
         user = self.context['request'].user
@@ -253,7 +253,7 @@ class ShoppingCartSerializer(FavoriteSerializer):
 
     class Meta:
         model = ShoppingCart
-        fields = ('user', 'recipe')
+        fields = ('recipe',)
 
     def validate(self, attrs):
         user = self.context['request'].user
