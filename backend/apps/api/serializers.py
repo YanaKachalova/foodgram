@@ -315,4 +315,4 @@ class FollowCreateSerializer(serializers.ModelSerializer):
         if user.follower.filter(author=author).exists():
             raise serializers.ValidationError('Уже подписаны.')
 
-        return Follow.objects.create(user=user, **validated_data)
+        return Follow.objects.create(user=user, author=author)

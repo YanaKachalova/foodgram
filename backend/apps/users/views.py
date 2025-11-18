@@ -55,8 +55,8 @@ class SubscribeView(APIView):
     def post(self, request, author_id):
         author = get_object_or_404(User, id=author_id)
         serializer = FollowCreateSerializer(
-            data={'author': author.id},
-            context={'request': request},
+            data={},
+            context={'request': request, 'author': author,},
         )
         serializer.is_valid(raise_exception=True)
         follow = serializer.save()
