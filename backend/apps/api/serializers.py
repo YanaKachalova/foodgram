@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
+from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from djoser.serializers import (UserSerializer as BaseUserSerializer,
                                 UserCreateSerializer)
@@ -230,35 +230,43 @@ class RecipeShortSerializer(serializers.ModelSerializer):
 class FavoriteSerializer(serializers.ModelSerializer):
     """Сериализатор для списка избранного."""
 
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
     class Meta:
         model = Favorite
         fields = ('user', 'recipe')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Favorite.objects.all(),
-                fields=('user', 'recipe'),
-                message='Рецепт уже в избранном.'
-            )
-        ]
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        recipe = attrs['recipe']
+
+        if Favorite.objects.filter(user=user, recipe=recipe).exists():
+            raise ValidationError({'detail': 'Рецепт уже в избранном.'})
+
+        return attrs
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        return Favorite.objects.create(user=user, **validated_data)
 
 
 class ShoppingCartSerializer(FavoriteSerializer):
     """Сериализатор для списка покупок."""
 
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
     class Meta:
         model = ShoppingCart
         fields = ('user', 'recipe')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Favorite.objects.all(),
-                fields=('user', 'recipe'),
-                message='Рецепт уже в списке покупок.'
-            )
-        ]
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        recipe = attrs['recipe']
+
+        if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+            raise ValidationError({'detail': 'Рецепт уже в списке покупок.'})
+
+        return attrs
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        return ShoppingCart.objects.create(user=user, **validated_data)
 
 
 class FollowReadSerializer(serializers.ModelSerializer):
