@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from django.contrib.auth import get_user_model
-from djoser.serializers import UserSerializer as BaseUserSerializer
+from djoser.serializers import (UserSerializer as BaseUserSerializer,
+                                UserCreateSerializer)
 
 from apps.recipes.models import (Tag,
                                  Ingredient,
@@ -43,6 +44,19 @@ class RecipeIngredientReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'name', 'measurement_unit', 'amount')
+
+
+class UserCreateSerializer(UserCreateSerializer):
+    class Meta(UserCreateSerializer.Meta):
+        model = User
+        fields = (
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'password',
+        )
 
 
 class UserReadSerializer(BaseUserSerializer):
