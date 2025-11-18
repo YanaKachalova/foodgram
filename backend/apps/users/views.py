@@ -68,7 +68,9 @@ class SubscribeView(APIView):
 
     def delete(self, request, author_id):
         author = get_object_or_404(User, id=author_id)
-        deleted, _ = request.user.follower.filter(author=author).delete()
+        deleted, _ = Follow.objects.filter(
+            user=request.user,
+            author=author,).delete()
         if not deleted:
             raise ValidationError('Подписки не было.')
         return Response(status=status.HTTP_204_NO_CONTENT)
