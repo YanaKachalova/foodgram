@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
 
@@ -9,8 +10,11 @@ from apps.recipes.models import (Tag,
                                  RecipeIngredient,
                                  Favorite,
                                  ShoppingCart)
-from apps.users.models import User, Follow
+from apps.users.models import Follow
 from .fields import Base64ImageField
+
+
+User = get_user_model()
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -294,17 +298,41 @@ class FollowReadSerializer(serializers.ModelSerializer):
                   'recipes_count',
                   )
 
-    def get_recipes(self, obj):
+    def get_recipes(self, follow):
         request = self.context.get('request')
-        recipes_limit = None
+        queryset = follow.author.recipes.all()
         if request is not None:
-            recipes_limit = request.query_params.get('recipes_limit')
+            RecipeShortSerializer(queryset, many=True).data
 
-        queryset = obj.author.recipes.all()
-        if recipes_limit is not None:
-            try:
-                queryset = queryset[:int(recipes_limit)]
-            except (TypeError, ValueError):
-                pass
+        try:
+            limit = int(request.query_params.get('recipes_limit'))
+        except (TypeError, ValueError):
+            return RecipeShortSerializer(queryset, many=True).data
 
-        return RecipeShortSerializer(queryset, many=True).data
+        return RecipeShortSerializer(queryset[:limit], many=True).data
+
+
+class FollowCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания подписки."""
+
+    class Meta:
+        model = Follow
+        fields = ('author',)
+
+    def validate_author(self, author):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        if user is None or not user.is_authenticated:
+            raise serializers.ValidationError('Требуется авторизация.')
+        if author == user:
+            raise serializers.ValidationError('Нельзя подписаться на себя!')
+        if Follow.objects.filter(user=user, author=author).exists():
+            raise serializers.ValidationError('Уже подписаны.')
+
+        return author
+
+    def create(self, validated_data):
+        request = self.context['request']
+        user = request.user
+        return Follow.objects.create(user=user, **validated_data)
