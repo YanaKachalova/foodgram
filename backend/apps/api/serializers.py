@@ -300,13 +300,19 @@ class FollowCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = ()
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Follow.objects.all(),
-                fields=('user', 'author'),
-                message='Уже подписаны.')]
 
     def create(self, validated_data):
         request = self.context['request']
         user = request.user
+        author = self.context['author']
+
+        if user is None or not user.is_authenticated:
+            raise serializers.ValidationError('Требуется авторизация.')
+
+        if author == user:
+            raise serializers.ValidationError('Нельзя подписаться на себя.')
+
+        if user.follower.filter(author=author).exists():
+            raise serializers.ValidationError('Уже подписаны.')
+
         return Follow.objects.create(user=user, **validated_data)
