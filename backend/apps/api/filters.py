@@ -19,7 +19,7 @@ class RecipeFilter(filters.FilterSet):
         if filter_value is None or int(filter_value) == 0:
             return queryset
         user = self.request.user
-        return queryset.filter(favorites__user_id=user.pk)
+        return queryset.filter(in_favorites__user_id=user.pk)
 
     def filter_is_in_cart(self, queryset, name, filter_value):
         if filter_value is None or int(filter_value) == 0:
