@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.functions import Lower
@@ -57,8 +57,12 @@ class Recipe(models.Model):
     name = models.CharField(max_length=256, verbose_name='Название')
     image = models.ImageField(upload_to='recipes/', verbose_name='Фото')
     text = models.TextField(verbose_name='Описание')
-    cooking_time = models.PositiveIntegerField(help_text='В минутах',
-                                               verbose_name='Время готовки')
+    cooking_time = models.PositiveIntegerField(validators=[
+        MinValueValidator(1, message='Время не может быть меньше 1 минуты'),
+        MaxValueValidator(1440, message='Время не может превышать 1440 минут'),
+        ],
+        help_text='В минутах',
+        verbose_name='Время готовки')
     tags = models.ManyToManyField('Tag',
                                   through='RecipeTag',
                                   related_name='recipes',
@@ -71,7 +75,7 @@ class Recipe(models.Model):
 
     class Meta:
         ordering = ('-pub_date',)
-        indexes = (models.Index(fields=['-pub_date']),)
+        indexes = (models.Index(fields=('-pub_date',)),)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
@@ -120,25 +124,19 @@ class RecipeIngredient(models.Model):
         return f'{self.ingredient} × {self.amount} для {self.recipe}'
 
 
-class UserRecipeRelationBase(models.Model):
-    """Базовая связь между пользователем и рецептом."""
-
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name='Пользователь',
-    )
-    created = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Создано')
+class Favorite(models.Model):
+    user = models.ForeignKey(User,
+                             related_name='favorites',
+                             on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe,
+                               related_name='in_favorites',
+                               on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        abstract = True
         constraints = [
-            models.UniqueConstraint(
-                fields=('user', 'recipe'),
-                name='%(class)s_unique_user_recipe',
-            )
+            UniqueConstraint(fields=('user', 'recipe'),
+                             name='unique_favorite'),
         ]
         ordering = ('-created',)
 
@@ -146,27 +144,21 @@ class UserRecipeRelationBase(models.Model):
         return f'{self.user} — {self.recipe}'
 
 
-class Favorite(UserRecipeRelationBase):
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='favorites',
-        verbose_name='Рецепт',
-    )
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(User,
+                             related_name='cart',
+                             on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe,
+                               related_name='in_carts',
+                               on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранные'
+        constraints = [
+            UniqueConstraint(fields=('user', 'recipe'),
+                             name='unique_cart_item'),
+        ]
+        ordering = ('-created',)
 
-
-class ShoppingCart(UserRecipeRelationBase):
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='in_carts',
-        verbose_name='Рецепт',
-    )
-
-    class Meta:
-        verbose_name = 'Список покупок'
-        verbose_name_plural = 'Списки покупок'
+    def __str__(self): 
+        return f'{self.user} — {self.recipe}'

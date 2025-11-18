@@ -36,15 +36,14 @@ class FavoritedFilter(admin.SimpleListFilter):
         return (('yes', 'Да'), ('no', 'Нет'))
 
     def queryset(self, request, queryset):
-        if self.value() == 'yes':
-            return (queryset
-                    .filter(**{f'{FAVORITE_RECIPE_REL}__isnull': False})
-                    .distinct())
-        else:
-            return (queryset
-                    .filter(**{f'{FAVORITE_RECIPE_REL}__isnull': True})
-                    .distinct())
-        return queryset
+        value = self.value()
+        if value == 'yes':
+            return (queryset.filter(
+                **{f'{FAVORITE_RECIPE_REL}__isnull': False}).distinct())
+        
+        if value == 'no':
+            return (queryset.filter(
+                **{f'{FAVORITE_RECIPE_REL}__isnull': True}).distinct())
 
 
 @admin.register(Tag)
