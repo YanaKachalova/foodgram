@@ -48,7 +48,7 @@ class AvatarUpdateView(generics.UpdateAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SubscribeView(generics.ListAPIView):
+class SubscribeView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = FollowReadSerializer
 
