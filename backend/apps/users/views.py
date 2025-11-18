@@ -6,8 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
 
 from .models import Follow
-from apps.api.serializers import (AvatarSerializer,
-                                  UserReadSerializer,
+from apps.api.serializers import (UserReadSerializer,
                                   FollowReadSerializer,
                                   FollowCreateSerializer)
 
