@@ -3,6 +3,8 @@ services:
 
   nginx:
     container_name: foodgram_proxy
+    env_file:
+      - ../.env
     build:
       context: ..
       dockerfile: infra/Dockerfile
@@ -23,7 +25,7 @@ services:
       context: ../backend
     container_name: foodgram_backend
     env_file:
-      - .env
+      - ../.env
     volumes:
       - ../backend/collected_static:/app/collected_static
       - ../backend/media:/app/media
@@ -49,7 +51,7 @@ services:
     image: postgres:16
     container_name: foodgram_db
     env_file:
-      - .env
+      - ../.env
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
