@@ -15,7 +15,7 @@ urlpatterns = [
     path('me/avatar/',
          AvatarUpdateView.as_view(),
          name='avatar'),
-    path('<int:id>/subscribe/',
+    path('<int:author_id>/subscribe/',
          SubscribeView.as_view(),
          name='subscribe'),
     path('subscriptions/',
