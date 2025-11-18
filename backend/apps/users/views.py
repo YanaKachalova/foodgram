@@ -8,7 +8,8 @@ from rest_framework.exceptions import ValidationError
 from .models import Follow
 from apps.api.serializers import (UserReadSerializer,
                                   FollowReadSerializer,
-                                  FollowCreateSerializer)
+                                  FollowCreateSerializer,
+                                  AvatarSerializer)
 
 
 User = get_user_model()
@@ -22,8 +23,9 @@ class MeView(generics.RetrieveAPIView):
         return self.request.user
 
 
-class AvatarUpdateView(APIView):
+class AvatarUpdateView(generics.UpdateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = AvatarSerializer
 
     def put(self, request):
         serializer = self.get_serializer(instance=request.user,
@@ -46,8 +48,9 @@ class AvatarUpdateView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SubscribeView(APIView):
+class SubscribeView(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = FollowReadSerializer
 
     def post(self, request, author_id):
         author = get_object_or_404(User, id=author_id)
