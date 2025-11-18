@@ -40,7 +40,7 @@ class FavoritedFilter(admin.SimpleListFilter):
         if value == 'yes':
             return (queryset.filter(
                 **{f'{FAVORITE_RECIPE_REL}__isnull': False}).distinct())
-        
+
         if value == 'no':
             return (queryset.filter(
                 **{f'{FAVORITE_RECIPE_REL}__isnull': True}).distinct())

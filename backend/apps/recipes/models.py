@@ -59,8 +59,7 @@ class Recipe(models.Model):
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.PositiveIntegerField(validators=[
         MinValueValidator(1, message='Время не может быть меньше 1 минуты'),
-        MaxValueValidator(1440, message='Время не может превышать 1440 минут'),
-        ],
+        MaxValueValidator(1440, message='Время больше 1440 минут'),],
         help_text='В минутах',
         verbose_name='Время готовки')
     tags = models.ManyToManyField('Tag',
@@ -160,5 +159,5 @@ class ShoppingCart(models.Model):
         ]
         ordering = ('-created',)
 
-    def __str__(self): 
+    def __str__(self):
         return f'{self.user} — {self.recipe}'
