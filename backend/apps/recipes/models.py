@@ -138,6 +138,8 @@ class Favorite(models.Model):
                              name='unique_favorite'),
         ]
         ordering = ('-created',)
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
 
     def __str__(self):
         return f'{self.user} — {self.recipe}'
@@ -158,6 +160,8 @@ class ShoppingCart(models.Model):
                              name='unique_cart_item'),
         ]
         ordering = ('-created',)
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Списки покупок'
 
     def __str__(self):
         return f'{self.user} — {self.recipe}'

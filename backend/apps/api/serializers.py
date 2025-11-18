@@ -305,3 +305,8 @@ class FollowCreateSerializer(serializers.ModelSerializer):
                 queryset=Follow.objects.all(),
                 fields=('user', 'author'),
                 message='Уже подписаны.')]
+
+    def create(self, validated_data):
+        request = self.context['request']
+        user = request.user
+        return Follow.objects.create(user=user, **validated_data)
