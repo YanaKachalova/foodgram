@@ -42,7 +42,6 @@ def health(request):
 class TagViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (permissions.AllowAny,)
     pagination_class = None
 
 
@@ -58,7 +57,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     filter_backends = (DjangoFilterBackend, drf_filters.OrderingFilter)
     filterset_class = RecipeFilter
-    ordering_fields = ['pub_date']
+    ordering_fields = ('pub_date',)
 
     def get_queryset(self):
         queryset = Recipe.objects.all()
@@ -85,12 +84,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        if self.action in (
+        if self.action in {
             'favorite',
             'remove_favorite',
             'shopping_cart',
             'delete_from_shopping_cart',
-        ):
+        }:
             return RecipeShortSerializer
 
         if self.request.method in ('POST', 'PUT', 'PATCH'):
@@ -123,16 +122,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(out_serializer.data,
                             status=status.HTTP_201_CREATED)
 
-        favorite_qs = Favorite.objects.filter(user=user, recipe=recipe)
-        if not favorite_qs.exists():
+        deleted_count, _ = Favorite.objects.filter(
+            user=user,
+            recipe=recipe,).delete()
+        if deleted_count == 0:
             raise NotFound('Рецепта нет в избранном.')
-        favorite_qs.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
         methods=['post', 'delete'],
-        permission_classes=[IsAuthenticated],
+        permission_classes=(IsAuthenticated,),
         url_path='shopping_cart',
         url_name='shopping_cart',
     )
@@ -142,9 +143,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
 
         if request.method == 'POST':
+            context = self.get_serializer_context()
             serializer = ShoppingCartSerializer(
                 data={'recipe': recipe.id},
-                context={'request': request},)
+                context=context,)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             out_serializer = self.get_serializer(recipe)
@@ -167,8 +169,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Выгрузка списка покупок пользователя."""
         user = request.user
         recipes_in_cart = Recipe.objects.filter(in_carts__user=user)
-        if not recipes_in_cart.exists():
-            raise ValidationError({'detail': 'Список покупок пуст.'})
 
         recipe_ingredients = (
             RecipeIngredient.objects
@@ -193,17 +193,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         content = '\n'.join(lines)
         file_stream = io.BytesIO(content.encode('utf-8'))
-        response = FileResponse(
+        return FileResponse(
             file_stream,
             as_attachment=True,
             filename='shopping_cart.txt',
             content_type='text/plain; charset=utf-8',
         )
-        return response
 
     @action(
         detail=True,
-        methods=['get'],
         permission_classes=[AllowAny],
         url_path='get-link',
         url_name='get_link',
@@ -214,15 +212,3 @@ class RecipeViewSet(viewsets.ModelViewSet):
         short_path = reverse('recipe-short-link', args=[recipe.pk])
         short_link = request.build_absolute_uri(short_path)
         return Response({'short-link': short_link})
-
-
-class RecipeShortLinkRedirectView(View):
-    """Редирект с короткой ссылки на страницу рецепта."""
-
-    def get(self, request, pk):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        # базовый адрес
-        base_url = request.build_absolute_uri('/')
-        # адрес, куда в итоге попадает пользователь
-        target_url = urljoin(base_url, f'recipes/{recipe.pk}/')
-        return redirect(target_url)

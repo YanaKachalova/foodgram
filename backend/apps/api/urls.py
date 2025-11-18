@@ -4,8 +4,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (health,
                     TagViewSet,
                     IngredientViewSet,
-                    RecipeViewSet,
-                    RecipeShortLinkRedirectView)
+                    RecipeViewSet)
+from apps.recipes.views import RecipeShortLinkRedirectView
 
 
 router = DefaultRouter()

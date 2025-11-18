@@ -227,10 +227,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
             )
         ]
 
-    # def create(self, validated_data):
-    #     user = self.context['request'].user
-    #     return Favorite.objects.create(user=user, **validated_data)
-
 
 class ShoppingCartSerializer(FavoriteSerializer):
     """Сериализатор для списка покупок."""
@@ -244,19 +240,6 @@ class ShoppingCartSerializer(FavoriteSerializer):
                 message='Рецепт уже в списке покупок.'
             )
         ]
-
-    # def validate(self, attrs):
-    #     user = self.context['request'].user
-    #     recipe = attrs['recipe']
-
-    #     if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
-    #         raise ValidationError({'detail': 'Рецепт уже в списке покупок.'})
-
-    #     return attrs
-
-    # def create(self, validated_data):
-    #     user = self.context['request'].user
-    #     return ShoppingCart.objects.create(user=user, **validated_data)
 
 
 class FollowReadSerializer(serializers.ModelSerializer):
@@ -308,8 +291,3 @@ class FollowCreateSerializer(serializers.ModelSerializer):
                 queryset=Follow.objects.all(),
                 fields=('user', 'author'),
                 message='Уже подписаны.')]
-
-    # def create(self, validated_data):
-    #     request = self.context['request']
-    #     user = request.user
-    #     return Follow.objects.create(user=user, **validated_data)
