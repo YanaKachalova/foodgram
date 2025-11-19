@@ -12,10 +12,6 @@ class Tag(models.Model):
     name = models.CharField(max_length=64,
                             unique=True,
                             verbose_name='Название')
-    color = models.CharField(max_length=7,
-                             unique=True,
-                             help_text='#RRGGBB',
-                             verbose_name='Цвет')
     slug = models.SlugField(max_length=100, unique=True, verbose_name='Слаг')
 
     class Meta:
