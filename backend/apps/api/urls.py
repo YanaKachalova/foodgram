@@ -5,11 +5,11 @@ from .views import (health,
                     TagViewSet,
                     IngredientViewSet,
                     RecipeViewSet,
-                    RecipeShortLinkRedirectView,
                     MeView,
                     AvatarUpdateView,
                     SubscribeView,
                     SubscriptionsListView,)
+from apps.recipes.views import RecipeShortLinkRedirectView
 
 
 router = DefaultRouter()
