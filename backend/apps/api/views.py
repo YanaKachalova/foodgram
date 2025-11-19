@@ -1,12 +1,20 @@
 import io
 
 from rest_framework import (viewsets,
-                            status)
+                            status,
+                            permissions,
+                            status,
+                            generics)
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from rest_framework.exceptions import ParseError, NotAuthenticated
+from rest_framework.exceptions import (ParseError,
+                                       NotAuthenticated,
+                                       ValidationError)
+from rest_framework.views import APIView
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 from django.db.models import Exists, OuterRef, BooleanField, Value
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import FileResponse
@@ -18,15 +26,23 @@ from apps.recipes.models import (Tag,
                                  Favorite,
                                  ShoppingCart,
                                  RecipeIngredient)
+from apps.users.models import Follow
 from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeReadSerializer,
                           RecipeWriteSerializer,
                           RecipeShortSerializer,
                           FavoriteSerializer,
-                          ShoppingCartSerializer)
+                          ShoppingCartSerializer,
+                          UserReadSerializer,
+                          FollowReadSerializer,
+                          FollowCreateSerializer,
+                          AvatarSerializer)
 from .filters import RecipeFilter, IngredientFilter
 from .permissions import IsAuthorOrReadOnly
+
+
+User = get_user_model()
 
 
 @api_view(['GET'])
@@ -212,3 +228,80 @@ class RecipeViewSet(viewsets.ModelViewSet):
         short_path = reverse('recipe-short-link', args=[recipe.pk])
         short_link = request.build_absolute_uri(short_path)
         return Response({'short-link': short_link})
+
+
+class MeView(generics.RetrieveAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UserReadSerializer
+
+    def get_object(self):
+        return self.request.user
+
+
+class AvatarUpdateView(generics.UpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = AvatarSerializer
+
+    def put(self, request):
+        serializer = self.get_serializer(instance=request.user,
+                                         data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request):
+        serializer = self.get_serializer(instance=request.user,
+                                         data=request.data,
+                                         partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request):
+        user = request.user
+        user.avatar.delete(save=True)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SubscribeView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = FollowReadSerializer
+
+    def post(self, request, author_id):
+        author = get_object_or_404(User, id=author_id)
+        serializer = FollowCreateSerializer(
+            data={},
+            context={'request': request, 'author': author, },
+        )
+        serializer.is_valid(raise_exception=True)
+        follow = serializer.save()
+        read_serializer = FollowReadSerializer(
+            follow,
+            context={'request': request},
+        )
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, author_id):
+        author = get_object_or_404(User, id=author_id)
+        deleted, _ = Follow.objects.filter(
+            user=request.user,
+            author=author,).delete()
+        if not deleted:
+            raise ValidationError('Подписки не было.')
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SubscriptionsListView(generics.ListAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = FollowReadSerializer
+
+    def get_queryset(self):
+        return (Follow.objects
+                .filter(user=self.request.user)
+                .select_related('author')
+                )
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
