@@ -1,13 +1,12 @@
 import io
 
 from rest_framework import (viewsets,
-                            status,
-                            permissions)
+                            status)
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound, ParseError, NotAuthenticated
+from rest_framework.exceptions import ParseError, NotAuthenticated
 from django.db.models import Exists, OuterRef, BooleanField, Value
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import FileResponse

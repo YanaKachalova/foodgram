@@ -360,7 +360,6 @@ class FollowReadSerializer(serializers.ModelSerializer):
             and author.following.filter(user=user).exists()
         )
 
-
     def get_recipes(self, follow):
         request = self.context.get('request')
         queryset = follow.author.recipes.all()
