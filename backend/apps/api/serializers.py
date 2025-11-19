@@ -154,6 +154,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountWrite(many=True,
                                         write_only=True,
                                         allow_empty=False)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True
+    )
     image = Base64ImageField(required=False)
 
     class Meta:
@@ -177,6 +181,24 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'ingredients': 'Ингредиенты не должны дублироваться.'})
             seen.add(ingredient_id)
+
+        tags = attrs.get('tags') or []
+        if not tags:
+            raise serializers.ValidationError({
+                'tags': 'Нужно указать хотя бы один тег.'
+            })
+
+        tag_ids = [tag.id for tag in tags]
+        if len(tag_ids) != len(set(tag_ids)):
+            raise serializers.ValidationError({
+                'tags': 'Теги не должны дублироваться.'
+            })
+
+        cooking_time = attrs.get('cooking_time')
+        if cooking_time is not None and cooking_time < 1:
+            raise serializers.ValidationError({
+                'cooking_time': 'Время готовки должно быть больше 1 минуты.'
+            })
         return attrs
 
     def _set_m2m(self, recipe, tags, ingredients):
@@ -212,6 +234,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags', None)
         ingredients = validated_data.pop('ingredients', None)
         instance = super().update(instance, validated_data)
+
         if tags is None and ingredients is None:
             return
         if tags is None:

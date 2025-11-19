@@ -49,13 +49,15 @@ class IngredientViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = IngredientFilter
+    permission_classes = (AllowAny,)
+    # filter_backends = (DjangoFilterBackend,)
+    # filterset_class = IngredientFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-    filter_backends = (DjangoFilterBackend, drf_filters.OrderingFilter)
+    # filter_backends = (DjangoFilterBackend, drf_filters.OrderingFilter)
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     ordering_fields = ('pub_date',)
 
@@ -94,11 +96,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         if self.request.method in ('POST', 'PUT', 'PATCH'):
             return RecipeWriteSerializer
-
         return RecipeReadSerializer
 
     def perform_create(self, serializer):
-        serializer.save()
+        serializer.save(author=self.request.user)
 
     @action(
         detail=True,
