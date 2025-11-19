@@ -4,8 +4,12 @@ from rest_framework.routers import DefaultRouter
 from .views import (health,
                     TagViewSet,
                     IngredientViewSet,
-                    RecipeViewSet)
-from apps.recipes.views import RecipeShortLinkRedirectView
+                    RecipeViewSet,
+                    RecipeShortLinkRedirectView,
+                    MeView,
+                    AvatarUpdateView,
+                    SubscribeView,
+                    SubscriptionsListView,)
 
 
 router = DefaultRouter()
@@ -15,7 +19,14 @@ router.register("recipes", RecipeViewSet, basename="recipes")
 
 urlpatterns = [
     path('health/', health),
-    path('users/', include('apps.users.urls', namespace='users')),
+    path('users/me/', MeView.as_view(), name='me'),
+    path('users/me/avatar/', AvatarUpdateView.as_view(), name='avatar'),
+    path('users/<int:author_id>/subscribe/',
+         SubscribeView.as_view(),
+         name='subscribe'),
+    path('users/subscriptions/',
+         SubscriptionsListView.as_view(),
+         name='subscriptions'),
     path('', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
     path('s/<int:pk>/',
