@@ -198,7 +198,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients', None)
         instance = super().update(instance, validated_data)
         if tags is None and ingredients is None:
-            return instance
+            return 
+        if tags is None:
+            tags_qs = instance.tags.all()
+        else:
+            tags_data = tags
         tags_data = (
             [tag.slug for tag in instance.tags.all()]
             if tags is None
