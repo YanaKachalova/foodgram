@@ -1,5 +1,4 @@
 import io
-
 from rest_framework import (viewsets,
                             status,
                             permissions,
