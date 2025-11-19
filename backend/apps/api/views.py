@@ -285,8 +285,6 @@ class SubscribeView(APIView):
         deleted, _ = Follow.objects.filter(
             user=request.user,
             author=author,).delete()
-        if not deleted:
-            raise ValidationError('Подписки не было.')
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -295,10 +293,8 @@ class SubscriptionsListView(generics.ListAPIView):
     serializer_class = FollowReadSerializer
 
     def get_queryset(self):
-        return (Follow.objects
-                .filter(user=self.request.user)
-                .select_related('author')
-                )
+        user = self.request.user
+        return user.follower.select_related('author')
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
