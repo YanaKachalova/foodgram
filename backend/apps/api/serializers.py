@@ -101,40 +101,53 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         many=True
     )
     image = serializers.ImageField(read_only=True)
-    is_favorited = serializers.BooleanField(read_only=True)
-    is_in_shopping_cart = serializers.BooleanField(read_only=True)
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
         fields = (
             'id',
-            'author',
-            'name',
-            'text',
-            'image',
-            'cooking_time',
             'tags',
+            'author',
             'ingredients',
-            'pub_date',
             'is_favorited',
             'is_in_shopping_cart',
+            'name',
+            'image',
+            'text',
+            'cooking_time',
         )
 
     def _get_user(self):
-        req = self.context.get('request')
-        return getattr(req, 'user', None) if req else None
+        request = self.context.get('request')
+        return getattr(request, 'user', None) if request else None
 
-    def get_ingredients(self, recipe):
-        rows = recipe.recipe_ingredients.select_related('ingredient')
-        return [
-            {
-                'id': row.ingredient_id,
-                'name': row.ingredient.name,
-                'measurement_unit': row.ingredient.measurement_unit,
-                'amount': row.amount,
-            }
-            for row in rows
-        ]
+    # def get_ingredients(self, recipe):
+    #     rows = recipe.recipe_ingredients.select_related('ingredient')
+    #     return [
+    #         {
+    #             'id': row.ingredient_id,
+    #             'name': row.ingredient.name,
+    #             'measurement_unit': row.ingredient.measurement_unit,
+    #             'amount': row.amount,
+    #         }
+    #         for row in rows
+    #     ]
+
+    def get_is_favorited(self, recipe):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return False
+        return recipe.in_favorites.filter(user=user).exists()
+
+    def get_is_in_shopping_cart(self, recipe):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return False
+        return recipe.in_carts.filter(user=user).exists()
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):

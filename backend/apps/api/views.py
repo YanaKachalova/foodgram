@@ -41,6 +41,8 @@ class TagViewSet(ReadOnlyModelViewSet):
     serializer_class = TagSerializer
     permission_classes = (AllowAny,)
     pagination_class = None
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class IngredientViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):

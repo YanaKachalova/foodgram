@@ -96,7 +96,7 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
         'rest_framework.filters.SearchFilter', ],
     'DEFAULT_PAGINATION_CLASS':
-        'rest_framework.pagination.PageNumberPagination',
+        'apps.api.pagination.LimitPageNumberPagination',
     'PAGE_SIZE':
         6,
 }
