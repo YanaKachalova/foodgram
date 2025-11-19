@@ -185,7 +185,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        author = self.context['request'].user
+        # author = self.context['request'].user
         # data = dict(validated_data, author=author)
         # recipe = Recipe.objects.create(**data)
         recipe = Recipe.objects.create(author=self.context["request"].user,
@@ -198,9 +198,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients', None)
         instance = super().update(instance, validated_data)
         if tags is None and ingredients is None:
-            return 
+            return
         if tags is None:
-            tags_qs = instance.tags.all()
+            tags_data = instance.tags.all()
         else:
             tags_data = tags
         tags_data = (
