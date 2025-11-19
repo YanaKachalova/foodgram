@@ -3,7 +3,6 @@ import io
 from rest_framework import (viewsets,
                             status,
                             permissions,
-                            status,
                             generics)
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.decorators import action, api_view, permission_classes
