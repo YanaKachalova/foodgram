@@ -57,6 +57,10 @@ class UserCreateSerializer(UserCreateSerializer):
             'last_name',
             'password',
         )
+        extra_kwargs = {
+            'first_name': {'required': True, 'allow_blank': False},
+            'last_name': {'required': True, 'allow_blank': False},
+        }
 
 
 class UserReadSerializer(BaseUserSerializer):
@@ -82,7 +86,7 @@ class UserReadSerializer(BaseUserSerializer):
 
 
 class AvatarSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField(required=False, allow_null=True)
+    avatar = Base64ImageField(required=True, allow_null=False)
 
     class Meta:
         model = User
@@ -185,11 +189,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        # author = self.context['request'].user
-        # data = dict(validated_data, author=author)
-        # recipe = Recipe.objects.create(**data)
-        recipe = Recipe.objects.create(author=self.context["request"].user,
-                                       **validated_data)
+        author = self.context['request'].user
+        data = dict(validated_data, author=author)
+        recipe = Recipe.objects.create(**data)
         self._set_m2m(recipe, tags, ingredients)
         return recipe
 
