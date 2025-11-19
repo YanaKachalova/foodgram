@@ -99,11 +99,25 @@ docker compose exec backend python manage.py createsuperuser
 
 Следовать инструкциям в консоли.
 
-### 6. Загрузка списка ингредиентов
+### 6.1. Загрузка только списка ингредиентов
 
-В проекте есть management-команда, которая загружает ингредиенты из CSV-файла data/ingredients.csv:
+В проекте есть management-команда, которая загружает только ингредиенты из CSV-файла data/ingredients.csv:
 ```bash
 docker compose exec backend python manage.py load_ingredients
+```
+
+### 6.1. Загрузка тестовых данных
+
+Файл data/test_data.json содержит тестовые данные:
+- пользователей,
+- теги,
+- ингредиенты,
+- рецепты с изображениями,
+- связи (избранное, корзина — если присутствуют).
+
+Для загрузки тестовых данных:
+```bash
+docker compose exec backend python manage.py loaddata data/test_data.json
 ```
 
 ---

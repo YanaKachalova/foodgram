@@ -1,15 +1,13 @@
 import io
 
 from rest_framework import (viewsets,
-                            mixins,
                             status,
                             permissions)
-# filters as drf_filters)
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ParseError, NotAuthenticated
 from django.db.models import Exists, OuterRef, BooleanField, Value
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import FileResponse
@@ -29,6 +27,7 @@ from .serializers import (TagSerializer,
                           FavoriteSerializer,
                           ShoppingCartSerializer)
 from .filters import RecipeFilter, IngredientFilter
+from .permissions import IsAuthorOrReadOnly
 
 
 @api_view(['GET'])
@@ -42,22 +41,19 @@ class TagViewSet(ReadOnlyModelViewSet):
     serializer_class = TagSerializer
     permission_classes = (AllowAny,)
     pagination_class = None
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = IngredientFilter
 
 
-class IngredientViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = (AllowAny,)
-    # filter_backends = (DjangoFilterBackend,)
-    # filterset_class = IngredientFilter
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-    # filter_backends = (DjangoFilterBackend, drf_filters.OrderingFilter)
+    permission_classes = (IsAuthorOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     ordering_fields = ('pub_date',)
@@ -100,6 +96,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeReadSerializer
 
     def perform_create(self, serializer):
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            raise NotAuthenticated('Требуется аутентификация.')
         serializer.save(author=self.request.user)
 
     @action(
@@ -128,7 +127,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             user=user,
             recipe=recipe,).delete()
         if deleted_count == 0:
-            raise NotFound('Рецепта нет в избранном.')
+            raise ParseError('Рецепта нет в избранном.')
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -157,7 +156,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         cart_qs = ShoppingCart.objects.filter(user=user, recipe=recipe)
         if not cart_qs.exists():
-            raise NotFound('Рецепта нет в списке покупок.')
+            raise ParseError('Рецепта нет в списке покупок.')
         cart_qs.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

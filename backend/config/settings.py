@@ -74,6 +74,11 @@ AUTH_PASSWORD_VALIDATORS = [
              'NumericPasswordValidator'},
 ]
 
+FIXTURE_DIRS = [
+    BASE_DIR / 'data',
+]
+
+
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'UTC'
 USE_I18N = True

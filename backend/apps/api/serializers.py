@@ -123,18 +123,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return getattr(request, 'user', None) if request else None
 
-    # def get_ingredients(self, recipe):
-    #     rows = recipe.recipe_ingredients.select_related('ingredient')
-    #     return [
-    #         {
-    #             'id': row.ingredient_id,
-    #             'name': row.ingredient.name,
-    #             'measurement_unit': row.ingredient.measurement_unit,
-    #             'amount': row.amount,
-    #         }
-    #         for row in rows
-    #     ]
-
     def get_is_favorited(self, recipe):
         request = self.context.get('request')
         user = getattr(request, 'user', None)
@@ -156,9 +144,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                                         allow_empty=False)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
-        many=True
+        many=True,
+        write_only=True
     )
-    image = Base64ImageField(required=False)
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -174,6 +163,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         ingredients = attrs.get('ingredients') or []
+
+        # Проверка на дублирование ингредиентов, их наличие
         seen = set()
         for item in ingredients:
             ingredient_id = item.get('id')
@@ -181,7 +172,25 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'ingredients': 'Ингредиенты не должны дублироваться.'})
             seen.add(ingredient_id)
+        if not ingredients:
+            raise serializers.ValidationError({
+                'ingredients': 'Нужно указать хотя бы один ингредиент.'
+            })
 
+        # Проверка сузествования ингредиента
+        ingredient_ids = [item.get('id') for item in ingredients]
+        existing_ids = set(
+            Ingredient.objects
+            .filter(id__in=ingredient_ids)
+            .values_list('id', flat=True)
+        )
+        missing_ids = set(ingredient_ids) - existing_ids
+        if missing_ids:
+            raise serializers.ValidationError({
+                'ingredients': 'Указаны несуществующие ингредиенты.'
+            })
+
+        # Проверка на наличие тегов и их дублирование
         tags = attrs.get('tags') or []
         if not tags:
             raise serializers.ValidationError({
@@ -194,6 +203,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 'tags': 'Теги не должны дублироваться.'
             })
 
+        # Проверка на время готовки >= 1 минут
         cooking_time = attrs.get('cooking_time')
         if cooking_time is not None and cooking_time < 1:
             raise serializers.ValidationError({
@@ -320,6 +330,8 @@ class FollowReadSerializer(serializers.ModelSerializer):
     first_name = serializers.ReadOnlyField(source='author.first_name')
     last_name = serializers.ReadOnlyField(source='author.last_name')
     avatar = serializers.ImageField(source='author.avatar', read_only=True)
+
+    is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.IntegerField(
         source='author.recipes.count',
@@ -334,9 +346,20 @@ class FollowReadSerializer(serializers.ModelSerializer):
                   'first_name',
                   'last_name',
                   'avatar',
+                  'is_subscribed',
                   'recipes',
                   'recipes_count',
                   )
+
+    def get_is_subscribed(self, follow):
+        request = self.context.get('request')
+        user = request.user
+        author = follow.author
+        return (
+            user and user.is_authenticated
+            and author.following.filter(user=user).exists()
+        )
+
 
     def get_recipes(self, follow):
         request = self.context.get('request')

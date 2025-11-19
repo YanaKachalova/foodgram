@@ -85,3 +85,8 @@ class SubscriptionsListView(generics.ListAPIView):
                 .filter(user=self.request.user)
                 .select_related('author')
                 )
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context

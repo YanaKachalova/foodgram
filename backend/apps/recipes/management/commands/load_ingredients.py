@@ -12,21 +12,25 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opts):
         path = opts['path']
-        created = skipped = 0
         try:
             file = open(path, encoding='utf-8')
         except FileNotFoundError as err:
             raise CommandError(f'Файл не найден: {path}') from err
 
         with file:
-            reader = csv.DictReader(file)
+            reader = csv.reader(file, delimiter=',')
+            created = 0
             for row in reader:
+                if len(row) < 2:
+                    continue
+
+                name = row[0].strip()
+                measurement_unit = row[1].strip()
                 _, is_created = Ingredient.objects.get_or_create(
-                    name=row['name'].strip(),
-                    measurement_unit=row['measurement_unit'].strip(),)
+                    name=name,
+                    measurement_unit=measurement_unit,)
                 created += int(is_created)
-                skipped += int(not is_created)
 
         self.stdout.write(self.style.SUCCESS(
-            f'Ингредиенты: создано={created}, пропущено={skipped}'
+            f'Ингредиенты: создано={created}.'
         ))
